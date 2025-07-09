@@ -38,7 +38,7 @@ GROUP BY action,
          toStartOfDay(toDateTime(time))
 ORDER BY "События" DESC
 ```
-![график лайки просмотры](screenshots/лайки просмотры.png)
+![график лайки просмотры](screenshots/likes_views.png)
 
 На графике отображена динамика лайков и просмотров за период с апреля по июль. В целом можно отметить следующее:
 
@@ -61,7 +61,7 @@ FROM simulator_20250520.feed_actions
 GROUP BY toStartOfDay(toDateTime(time))
 ORDER BY "CTR" DESC
 ```
-![график ctr](screenshots/ctr.png)
+![график ctr](screenshots/CTR.png)
 
 На графике отображена динамика CTR за период с апреля по июль. В целом можно отметить следующее:
 
@@ -113,7 +113,7 @@ FROM simulator_20250520.feed_actions
 GROUP BY city
 ORDER BY "COUNT(user_id)" DESC
 ```
-![график city](screenshots/city.png)
+![график city](screenshots/citys.png)
 
 # График активных пользователей (те, кто использует и новостную ленту, и мессенджер)
 ```sql
