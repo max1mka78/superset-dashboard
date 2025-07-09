@@ -2,6 +2,10 @@
 
 ![график пример запроса feed](screenshots/feed_actions.png)
 
+# Пример запроса в базу данных message_actions с помощью redash
+
+![график пример запроса message](screenshots/example_message.png)
+
 # график DAU (daily active users)
 ```sql
 SELECT toStartOfDay(toDateTime(time)) AS __timestamp,
@@ -130,12 +134,68 @@ ORDER BY "Активные юзеры" DESC
 ```
 ![график active_users](screenshots/active_users.png)
 
+# Тепловая карта удержания пользователей (retenshen)
+```sql
+SELECT toString(start_day) start_day,
+       toString(day) day,
+                     count(user_id) AS users
+FROM
+  (SELECT *
+   FROM
+     (SELECT user_id,
+             min(toDate(time)) AS start_day
+      FROM simulator_20250520.feed_actions
+      GROUP BY user_id) t1
+   JOIN
+     (SELECT DISTINCT user_id,
+                      toDate(time) AS day
+      FROM simulator_20250520.feed_actions) t2 USING user_id
+   WHERE start_day >= today() - 20 )
+GROUP BY start_day,
+         day
+```
+![график retenshen](screenshots/retenshen.png)
+
+# График активных пользователей в разрезе старых, новых и ушедших
+```sql
+SELECT this_week, previous_week, -uniq(user_id) as num_users, status FROM
+
+(SELECT user_id, 
+groupUniqArray(toMonday(toDate(time))) as weeks_visited, 
+addWeeks(arrayJoin(weeks_visited), +1) this_week, 
+if(has(weeks_visited, this_week) = 1, 'retained', 'gone') as status, 
+addWeeks(this_week, -1) as previous_week
+FROM simulator.feed_actions
+group by user_id)
+
+where status = 'gone'
+
+group by this_week, previous_week, status
+
+HAVING this_week != addWeeks(toMonday(today()), +1)
+
+union all
 
 
+SELECT this_week, previous_week, toInt64(uniq(user_id)) as num_users, status FROM
 
+(SELECT user_id, 
+groupUniqArray(toMonday(toDate(time))) as weeks_visited, 
+arrayJoin(weeks_visited) this_week, 
+if(has(weeks_visited, addWeeks(this_week, -1)) = 1, 'retained', 'new') as status, 
+addWeeks(this_week, -1) as previous_week
+FROM simulator.feed_actions
+group by user_id)
 
+group by this_week, previous_week, status
+```
+![график gone_old_new](screenshots/gone_old_new.png)
+На графике представлена динамика активной аудитории по неделям.
+Для каждой недели пользователи разделены на три категории:
 
-
+* **Новые** — те, у кого это была первая активность в новостной ленте.
+* **Старые** — пользователи, которые были активны как в текущую, так и в предыдущую неделю.
+* **Ушедшие** — те, кто был активен на прошлой неделе, но не заходил в приложение на текущей неделе.
 
 
 
